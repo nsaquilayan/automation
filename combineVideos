@@ -1,0 +1,80 @@
+#!/usr/bin/python3
+
+'''
+Combine all videos in the current working directory and nested directories,
+and export it and a video description with timestamps to EXPORT_PATH.
+'''
+
+import os
+from datetime import timedelta, datetime
+from moviepy.editor import VideoFileClip, concatenate_videoclips
+
+'''
+Returns all of the video files belonging to dir_name
+'''
+
+TIME_FORMAT = '%M:%S'
+EXPORT_PATH = '/mnt/c/Users/Nicholas/Videos/exports/'
+
+export_name = 'export'
+dir_name_to_files = {}
+
+'''
+Collect all of the videos starting at the base directory into dir_name_to_files
+'''
+def read_files(dir_name):
+    print('scanning {}...'.format(dir_name))
+    dir_name_to_files[dir_name] = []
+    last_slash_idx = dir_name.rfind('/') + 1
+    subdirs = []
+    with os.scandir(dir_name) as it:
+        for entry in it:
+            if entry.is_file():
+                dir_name_to_files[dir_name].append(entry)
+            elif entry.is_dir():
+                subdirs.append(entry.name)
+    for subdir in subdirs:
+        read_files(subdir)
+
+'''
+Create the video and its description with timestamps
+'''
+def create_video():
+    print('creating video and description...')
+    description = ''
+    current_timestamp = datetime(1,1,1,0,0)
+    clips = []
+    duration = 0
+    for dir_name, files in dir_name_to_files.items():
+        if files:
+            description += dir_name + '\n'
+        print('Files in: {}'.format(dir_name))
+        for _file in files:
+            if '.mp4' in _file.name:
+                print(_file)
+                description += _file.name + ': ' + current_timestamp.strftime(TIME_FORMAT) + '\n'
+                clip = VideoFileClip(_file.path)
+                clip_duration = timedelta(seconds=clip.duration)
+                duration += clip.duration
+                current_timestamp = current_timestamp + clip_duration
+                clips.append(clip)
+    print('description:\n', description)
+    with open(EXPORT_PATH + export_name + '.txt', 'w') as description_file:
+        description_file.write(description)
+    combined_clips = concatenate_videoclips(clips, method='compose')
+    combined_clips.write_videofile(EXPORT_PATH + export_name + '.mp4',
+                         temp_audiofile='temp-audio.m4a',
+                         audio_codec="aac",
+                         fps=60,
+                         codec='libx264')
+    for clip in clips:
+        clip.close()
+
+def main():
+    global export_name
+    export_name = input("Export name? (don't include file extention': ")
+    read_files(os.getcwd())
+    create_video()
+
+if __name__ == '__main__':
+    main()
