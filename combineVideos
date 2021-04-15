@@ -6,6 +6,7 @@ and export it and a video description with timestamps to EXPORT_PATH.
 '''
 
 import os
+import sys
 from datetime import timedelta, datetime
 from moviepy.editor import VideoFileClip, concatenate_videoclips
 
@@ -41,6 +42,7 @@ Create the video and its description with timestamps
 '''
 def create_video():
     print('creating video and description...')
+    method = sys.argv[1] if len(sys.argv) > 1 else "chain"
     description = ''
     current_timestamp = datetime(1,1,1,0,0)
     clips = []
@@ -59,9 +61,10 @@ def create_video():
                 current_timestamp = current_timestamp + clip_duration
                 clips.append(clip)
     print('description:\n', description)
+    print('concatenating videos with method {}'.format(method))
     with open(EXPORT_PATH + export_name + '.txt', 'w') as description_file:
         description_file.write(description)
-    combined_clips = concatenate_videoclips(clips, method='compose')
+    combined_clips = concatenate_videoclips(clips, method=method)
     combined_clips.write_videofile(EXPORT_PATH + export_name + '.mp4',
                          temp_audiofile='temp-audio.m4a',
                          audio_codec="aac",
