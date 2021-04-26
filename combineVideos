@@ -54,7 +54,8 @@ def create_video():
         for _file in files:
             if '.mp4' in _file.name:
                 print(_file)
-                description += _file.name + ': ' + current_timestamp.strftime(TIME_FORMAT) + '\n'
+                file_name_without_extension = _file.name[:len(_file.name) - 4]
+                description += current_timestamp.strftime(TIME_FORMAT)+ ' - ' + file_name_without_extension + '\n'
                 clip = VideoFileClip(_file.path)
                 clip_duration = timedelta(seconds=clip.duration)
                 duration += clip.duration
